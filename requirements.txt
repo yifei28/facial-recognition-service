@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+facenet-pytorch
+torch         # 如果你有 GPU，根据官网选对应的 cuda 版本，如 torch==2.0.1+cu117
+numpy
+pillow
+python-dotenv  # 如果要加载 .env 文件
+python-multipart
+redis

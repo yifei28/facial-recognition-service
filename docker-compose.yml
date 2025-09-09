@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: facial-recognition-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - facial-network
+
+  face-service:
+    build: .
+    container_name: facial-recognition-service
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - MODEL_PATH=/app/models/20180402-114759-vggface2.pt
+      - EMBEDDING_THRESHOLD=0.8
+    volumes:
+      - ./models:/app/models:ro
+      - ./tests/embeddings:/app/tests/embeddings
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - facial-network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  facial-network:
+    driver: bridge
